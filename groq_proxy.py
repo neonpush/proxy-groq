@@ -4,7 +4,15 @@ import httpx
 import os
 
 app = FastAPI()
-GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+
+# Get API key from environment variable
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError(
+        "GROQ_API_KEY environment variable is not set. "
+        "Please set it in your Railway dashboard: "
+        "Settings > Variables > Add Variable"
+    )
 
 @app.post("/")
 async def proxy(req: Request):
