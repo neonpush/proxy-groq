@@ -1,0 +1,49 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
+import httpx
+import os
+
+app = FastAPI()
+GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+
+@app.post("/")
+async def proxy(req: Request):
+    data = await req.json()
+    
+    async with httpx.AsyncClient() as client:
+        # Check if streaming is requested
+        is_streaming = data.get("stream", False)
+        
+        if is_streaming:
+            # Handle streaming response
+            async def stream_generator():
+                async with client.stream(
+                    "POST",
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {GROQ_API_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json=data,
+                    timeout=60.0
+                ) as response:
+                    async for chunk in response.aiter_bytes():
+                        yield chunk
+            
+            return StreamingResponse(
+                stream_generator(),
+                media_type="text/event-stream"
+            )
+        else:
+            # Handle non-streaming response
+            r = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json=data,
+                timeout=60.0
+            )
+            return r.json()
+
