@@ -1,7 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
 import httpx
 import os
+
+# Load .env file for local development
+load_dotenv()
 
 app = FastAPI()
 
