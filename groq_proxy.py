@@ -18,8 +18,8 @@ if not GROQ_API_KEY:
         "Settings > Variables > Add Variable"
     )
 
-@app.post("/")
-async def proxy(req: Request):
+async def proxy_handler(req: Request):
+    """Handle proxy requests to Groq API"""
     data = await req.json()
     
     async with httpx.AsyncClient() as client:
@@ -58,4 +58,13 @@ async def proxy(req: Request):
                 timeout=60.0
             )
             return r.json()
+
+# Support both root and /chat/completions endpoints
+@app.post("/")
+async def proxy_root(req: Request):
+    return await proxy_handler(req)
+
+@app.post("/chat/completions")
+async def proxy_chat_completions(req: Request):
+    return await proxy_handler(req)
 
